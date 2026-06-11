@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Work_Sans } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,13 +16,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Display font for headings — gives the UI clear typographic contrast.
+const poppins = Poppins({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+});
+
+// Wordmark font for the "True Hire" site name.
+const workSans = Work_Sans({
+  variable: "--font-wordmark",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "Hyre — Hiring & referrals, in one flow",
-    template: "%s · Hyre",
+    default: "True Hire — Hiring & referrals, in one flow",
+    template: "%s · True Hire",
   },
   description:
-    "Hyre is a modern applicant tracking system and employee referral platform — manage roles, pipelines, and referrals in one premium, fast workspace.",
+    "Discover and apply to open roles at True Balance. Your data stays private and is used only for your application.",
 };
 
 export default function RootLayout({
@@ -34,15 +48,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${workSans.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground flex min-h-full flex-col">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        {/* Brand is orange/white/black — light theme only. */}
+        <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
           {children}
           <Toaster richColors position="top-center" />
         </ThemeProvider>

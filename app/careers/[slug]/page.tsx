@@ -3,7 +3,6 @@ import { ArrowLeft, Briefcase, MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ApplyForm } from "@/components/careers/apply-form";
 import { repo } from "@/lib/data";
 import { EMPLOYMENT_TYPE_LABELS, LOCATION_TYPE_LABELS } from "@/lib/schemas/enums";
 
@@ -49,12 +48,12 @@ export default async function CareerJobPage({ params }: { params: Promise<{ slug
             {job.openings} opening{job.openings === 1 ? "" : "s"}
           </span>
         </div>
-        <a
-          href="#apply"
+        <Link
+          href={`/careers/apply?jobs=${job.id}`}
           className="mt-5 inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Apply for this role
-        </a>
+        </Link>
       </div>
 
       {/* About */}
@@ -76,15 +75,22 @@ export default async function CareerJobPage({ params }: { params: Promise<{ slug
         </section>
       )}
 
-      {/* Apply */}
-      <section id="apply" className="mt-10 scroll-mt-20 border-t pt-8">
-        <h2 className="text-xl font-semibold tracking-tight">Apply for {job.title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tell us about yourself. Fields marked * are required.
+      {/* Apply CTA */}
+      <section className="mt-10 flex flex-col items-center gap-3 rounded-xl border bg-muted/30 py-8 text-center">
+        <p className="text-sm text-muted-foreground">Like what you see?</p>
+        <Link
+          href={`/careers/apply?jobs=${job.id}`}
+          className="inline-flex h-10 items-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Apply for this role
+        </Link>
+        <p className="text-xs text-muted-foreground">
+          You can apply to multiple roles at once from the{" "}
+          <Link href="/careers" className="text-primary hover:underline">
+            careers page
+          </Link>
+          .
         </p>
-        <div className="mt-6">
-          <ApplyForm jobId={job.id} jobTitle={job.title} />
-        </div>
       </section>
     </div>
   );

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { submitApplication } from "@/lib/actions/applications";
+import { applyToJobs } from "@/lib/actions/applications";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,20 +15,17 @@ function Field({
   label,
   name,
   error,
-  required,
   children,
 }: {
   label: string;
   name: string;
   error?: string;
-  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
       <label htmlFor={name} className="text-sm font-medium">
         {label}
-        {required && <span className="text-destructive"> *</span>}
       </label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
@@ -36,20 +33,26 @@ function Field({
   );
 }
 
-export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle: string }) {
+export function MultiApplyForm({
+  jobs,
+  user,
+}: {
+  jobs: { id: string; title: string }[];
+  user: { name: string; email: string };
+}) {
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [done, setDone] = useState<number | null>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setErrors({});
     startTransition(async () => {
-      const res = await submitApplication(fd);
+      const res = await applyToJobs(fd);
       if (res.ok) {
-        setSubmitted(true);
-        toast.success("Application submitted!");
+        setDone(res.count);
+        toast.success(`Applied to ${res.count} role${res.count === 1 ? "" : "s"}!`);
       } else {
         if (res.fieldErrors) setErrors(res.fieldErrors);
         toast.error(res.error);
@@ -57,16 +60,17 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle: string
     });
   }
 
-  if (submitted) {
+  if (done != null) {
     return (
       <div className="rounded-xl border bg-card p-8 text-center">
         <div className="mx-auto grid size-12 place-items-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
           <CheckCircle2 className="size-6" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">Application received</h3>
+        <h3 className="mt-4 text-lg font-semibold">
+          Applied to {done} role{done === 1 ? "" : "s"}
+        </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Thanks for applying to <span className="font-medium text-foreground">{jobTitle}</span>.
-          Our team will review your profile and be in touch.
+          Thanks, {user.name.split(" ")[0]}! Our team will review your profile and be in touch.
         </p>
         <Link href="/careers" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>
           Browse more roles
@@ -77,15 +81,33 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle: string
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
-      <input type="hidden" name="jobId" value={jobId} />
+      <input type="hidden" name="jobIds" value={jobs.map((j) => j.id).join(",")} />
+
+      {/* Roles being applied to */}
+      <div className="rounded-xl border bg-muted/30 p-4">
+        <p className="text-sm font-medium">
+          Applying to {jobs.length} role{jobs.length === 1 ? "" : "s"}
+        </p>
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {jobs.map((j) => (
+            <li key={j.id} className="rounded-full bg-background px-2.5 py-1 text-xs font-medium">
+              {j.title}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Identity (from account, locked) */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Name" name="name">
+          <Input id="name" value={user.name} disabled />
+        </Field>
+        <Field label="Email" name="email">
+          <Input id="email" value={user.email} disabled />
+        </Field>
+      </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full name" name="name" error={errors.name} required>
-          <Input id="name" name="name" required aria-invalid={!!errors.name} />
-        </Field>
-        <Field label="Email" name="email" error={errors.email} required>
-          <Input id="email" name="email" type="email" required aria-invalid={!!errors.email} />
-        </Field>
         <Field label="Phone" name="phone" error={errors.phone}>
           <Input id="phone" name="phone" />
         </Field>
@@ -129,21 +151,31 @@ export function ApplyForm({ jobId, jobTitle }: { jobId: string; jobTitle: string
         >
           <Paperclip className="size-4" />
           <span>Attach your resume</span>
-          <input id="resume" name="resume" type="file" accept=".pdf,.doc,.docx" className="sr-only" onChange={(e) => {
-            const f = e.target.files?.[0];
-            const span = e.currentTarget.closest("label")?.querySelector("span");
-            if (span && f) span.textContent = f.name;
-          }} />
+          <input
+            id="resume"
+            name="resume"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="sr-only"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              const span = e.currentTarget.closest("label")?.querySelector("span");
+              if (span && f) span.textContent = f.name;
+            }}
+          />
         </label>
       </Field>
 
       <Field label="Cover note" name="coverNote" error={errors.coverNote}>
-        <Textarea id="coverNote" name="coverNote" rows={4} placeholder="Tell us why you're a great fit (optional)" />
+        <Textarea id="coverNote" name="coverNote" rows={4} placeholder="Anything you'd like us to know (optional)" />
       </Field>
 
-      <div className="flex justify-end border-t pt-4">
+      <div className="flex items-center justify-end gap-2 border-t pt-4">
+        <Link href="/careers" className={cn(buttonVariants({ variant: "ghost" }))}>
+          Cancel
+        </Link>
         <Button type="submit" disabled={pending} className="px-6">
-          {pending ? "Submitting…" : "Submit application"}
+          {pending ? "Submitting…" : `Submit application${jobs.length === 1 ? "" : "s"}`}
         </Button>
       </div>
     </form>

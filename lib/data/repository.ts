@@ -19,6 +19,7 @@ import type {
 } from "@/lib/schemas";
 
 import type {
+  AnalyticsData,
   ApplicationDetail,
   ApplicationRecord,
   CandidatePipelineFilter,
@@ -68,9 +69,17 @@ export interface HyreRepository {
   getUserById(id: string): Promise<UserRecord | null>;
   getUserByEmail(email: string): Promise<UserRecord | null>;
   upsertUser(input: UserInput): Promise<UserRecord>;
+  /** Create a user with an optional password hash (used by candidate signup). */
+  createUser(input: {
+    name: string;
+    email: string;
+    role: Role;
+    passwordHash?: string | null;
+  }): Promise<UserRecord>;
   /** Returns the user if email + password match, else null. */
   verifyCredentials(email: string, password: string): Promise<UserRecord | null>;
 
-  // --- Dashboard ----------------------------------------------------------
+  // --- Dashboard & analytics ---------------------------------------------
   getDashboardStats(): Promise<DashboardStats>;
+  getAnalytics(): Promise<AnalyticsData>;
 }

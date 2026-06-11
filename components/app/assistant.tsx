@@ -53,17 +53,17 @@ export function AskHyre() {
         className="gap-1.5 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary"
       >
         <Sparkles className="size-4" />
-        <span className="hidden sm:inline">Ask Hyre AI</span>
+        <span className="hidden sm:inline">Ask True Hire AI</span>
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="w-full gap-0 sm:max-w-md">
           <SheetHeader className="border-b">
             <SheetTitle className="flex items-center gap-2">
-              <span className="grid size-6 place-items-center rounded-md bg-gradient-to-br from-primary to-violet-500 text-primary-foreground">
+              <span className="grid size-6 place-items-center rounded-md bg-gradient-to-br from-primary to-cyan-400 text-primary-foreground">
                 <Sparkles className="size-3.5" />
               </span>
-              Ask Hyre AI
+              Ask True Hire AI
             </SheetTitle>
             <SheetDescription>
               Ask about your pipeline in plain language.

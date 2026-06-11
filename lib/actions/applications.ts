@@ -2,43 +2,58 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getSessionUser } from "@/lib/auth/session";
 import { repo } from "@/lib/data";
 import { storage } from "@/lib/storage";
 import { applicationInputSchema } from "@/lib/schemas";
+import {
+  fileToSheetResume,
+  isSheetSyncEnabled,
+  syncApplicantToSheet,
+} from "@/lib/sheets/client";
 
 export type ApplyResult =
-  | { ok: true }
+  | { ok: true; count: number }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
-/** Public career-portal submission. Saves the resume, upserts the candidate, files the application. */
-export async function submitApplication(formData: FormData): Promise<ApplyResult> {
-  // Read a text field, treating empty/whitespace as "not provided".
+/**
+ * Candidate applies to one or more roles in a single submission.
+ *
+ * Requires a signed-in candidate (the careers/apply page gates this). The
+ * applicant's identity (name + email) comes from their account — not the form —
+ * so applications always tie back to the logged-in candidate.
+ */
+export async function applyToJobs(formData: FormData): Promise<ApplyResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, error: "Please sign in to apply." };
+
   const get = (key: string): string | undefined => {
     const v = formData.get(key);
     return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
   };
 
-  const skillsRaw = get("skills");
-  const skills = skillsRaw
-    ? skillsRaw.split(",").map((s) => s.trim()).filter(Boolean)
-    : [];
+  const jobIds = (get("jobIds") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (jobIds.length === 0) return { ok: false, error: "No roles selected." };
 
-  // Handle the resume upload first (if any).
+  const skillsRaw = get("skills");
+  const skills = skillsRaw ? skillsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
+
   let resumeUrl: string | undefined;
   const resume = formData.get("resume");
   if (resume instanceof File && resume.size > 0) {
     try {
-      const saved = await storage.save(resume);
-      resumeUrl = saved.url;
+      resumeUrl = (await storage.save(resume)).url;
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : "Resume upload failed." };
     }
   }
 
-  const input = {
-    jobId: get("jobId") ?? "",
-    name: get("name") ?? "",
-    email: get("email") ?? "",
+  const base = {
+    name: user.name,
+    email: user.email,
     phone: get("phone"),
     location: get("location"),
     currentEmployer: get("currentEmployer"),
@@ -54,25 +69,64 @@ export async function submitApplication(formData: FormData): Promise<ApplyResult
     resumeUrl,
   };
 
-  const parsed = applicationInputSchema.safeParse(input);
-  if (!parsed.success) {
-    const flat = parsed.error.flatten().fieldErrors;
-    const fieldErrors: Record<string, string> = {};
-    for (const k in flat) {
-      const v = flat[k as keyof typeof flat];
-      if (v && v[0]) fieldErrors[k] = v[0];
+  let applied = 0;
+  const appliedTitles: string[] = [];
+  let validatedInput: import("@/lib/schemas").ApplicationInput | undefined;
+  for (const jobId of jobIds) {
+    const job = await repo.getJobById(jobId);
+    if (!job || job.status !== "PUBLISHED") continue;
+
+    const parsed = applicationInputSchema.safeParse({ ...base, jobId });
+    if (!parsed.success) {
+      const flat = parsed.error.flatten().fieldErrors;
+      const fieldErrors: Record<string, string> = {};
+      for (const k in flat) {
+        const v = flat[k as keyof typeof flat];
+        if (v && v[0]) fieldErrors[k] = v[0];
+      }
+      return { ok: false, error: "Please fix the highlighted fields.", fieldErrors };
     }
-    return { ok: false, error: "Please fix the highlighted fields.", fieldErrors };
+    await repo.applyToJob(parsed.data);
+    validatedInput = parsed.data;
+    appliedTitles.push(job.title);
+    applied += 1;
   }
 
-  // Guard against applying to a non-existent or unpublished role.
-  const job = await repo.getJobById(parsed.data.jobId);
-  if (!job || job.status !== "PUBLISHED") {
-    return { ok: false, error: "This role is no longer accepting applications." };
+  if (applied === 0) {
+    return { ok: false, error: "Those roles are no longer accepting applications." };
   }
 
-  await repo.applyToJob(parsed.data);
+  // Mirror the applicant into the Google Sheet backend (best-effort). A sheet
+  // failure must never break the application the candidate just submitted.
+  if (validatedInput && isSheetSyncEnabled()) {
+    try {
+      const sheetResume =
+        resume instanceof File && resume.size > 0 ? await fileToSheetResume(resume) : undefined;
+      const result = await syncApplicantToSheet({
+        name: validatedInput.name,
+        email: validatedInput.email,
+        phone: validatedInput.phone,
+        location: validatedInput.location,
+        currentEmployer: validatedInput.currentEmployer,
+        currentTitle: validatedInput.currentTitle,
+        totalExperienceYears: validatedInput.totalExperienceYears,
+        noticePeriodDays: validatedInput.noticePeriodDays,
+        currentCtc: validatedInput.currentCtc,
+        expectedCtc: validatedInput.expectedCtc,
+        linkedinUrl: validatedInput.linkedinUrl,
+        portfolioUrl: validatedInput.portfolioUrl,
+        skills: validatedInput.skills,
+        coverNote: validatedInput.coverNote,
+        rolesApplied: appliedTitles,
+        resume: sheetResume,
+      });
+      if (!result.ok) console.error("[sheets] applicant sync failed:", result.error);
+    } catch (e) {
+      console.error("[sheets] applicant sync threw:", e);
+    }
+  }
+
   revalidatePath("/dashboard");
-  revalidatePath(`/jobs/${parsed.data.jobId}`);
-  return { ok: true };
+  revalidatePath("/candidates");
+  return { ok: true, count: applied };
 }

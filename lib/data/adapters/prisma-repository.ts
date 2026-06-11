@@ -9,7 +9,12 @@ import type { Prisma, User as PrismaUser, Candidate as PrismaCandidate } from "@
 
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
-import { FUNNEL_STAGES, STAGE_META } from "@/lib/schemas/enums";
+import {
+  CANDIDATE_SOURCE_LABELS,
+  FUNNEL_STAGES,
+  PIPELINE_STAGES,
+  STAGE_META,
+} from "@/lib/schemas/enums";
 import type {
   ApplicationInput,
   FeedbackInput,
@@ -24,6 +29,7 @@ import type {
 
 import type { HyreRepository } from "../repository";
 import type {
+  AnalyticsData,
   ApplicationDetail,
   ApplicationRecord,
   CandidatePipelineFilter,
@@ -618,6 +624,23 @@ export class PrismaRepository implements HyreRepository {
     return mapUser(await prisma.user.findUnique({ where: { email: email.toLowerCase() } }));
   }
 
+  async createUser(input: {
+    name: string;
+    email: string;
+    role: Role;
+    passwordHash?: string | null;
+  }): Promise<UserRecord> {
+    const row = await prisma.user.create({
+      data: {
+        name: input.name,
+        email: input.email.toLowerCase(),
+        role: input.role,
+        passwordHash: input.passwordHash ?? null,
+      },
+    });
+    return mapUser(row)!;
+  }
+
   async verifyCredentials(email: string, password: string): Promise<UserRecord | null> {
     const row = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!row || !verifyPassword(password, row.passwordHash)) return null;
@@ -681,6 +704,102 @@ export class PrismaRepository implements HyreRepository {
       stageCounts,
       funnel,
       referralConversionRate: totalReferrals === 0 ? 0 : hiredReferrals / totalReferrals,
+    };
+  }
+
+  async getAnalytics(): Promise<AnalyticsData> {
+    const [apps, referrals, sourceGroups, openPositions, candidates] = await Promise.all([
+      prisma.application.findMany({
+        select: {
+          stage: true,
+          job: { select: { department: true } },
+          stageEvents: { select: { toStage: true, createdAt: true } },
+        },
+      }),
+      prisma.referral.findMany({ select: { status: true, referrer: { select: { name: true } } } }),
+      prisma.candidate.groupBy({ by: ["source"], _count: { _all: true } }),
+      prisma.job.count({ where: { status: "PUBLISHED" } }),
+      prisma.candidate.count(),
+    ]);
+
+    const reached = (a: (typeof apps)[number]) =>
+      Math.max(rankOf(a.stage), ...a.stageEvents.map((e) => rankOf(e.toStage)));
+
+    const funnel = FUNNEL_STAGES.map((stage) => ({
+      stage,
+      label: STAGE_META[stage].label,
+      count: apps.filter((a) => reached(a) >= rankOf(stage)).length,
+    }));
+
+    const stageCounts = PIPELINE_STAGES.map((stage) => ({
+      stage,
+      label: STAGE_META[stage].label,
+      count: apps.filter((a) => a.stage === stage).length,
+    })).filter((s) => s.count > 0);
+
+    const sourceBreakdown = sourceGroups
+      .map((g) => ({
+        source: g.source,
+        label: CANDIDATE_SOURCE_LABELS[g.source as keyof typeof CANDIDATE_SOURCE_LABELS] ?? g.source,
+        count: g._count._all,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const deptMap = new Map<string, number>();
+    for (const a of apps) {
+      const d = a.job?.department ?? "Other";
+      deptMap.set(d, (deptMap.get(d) ?? 0) + 1);
+    }
+    const byDepartment = [...deptMap.entries()]
+      .map(([department, count]) => ({ department, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const refMap = new Map<string, { total: number; hired: number }>();
+    for (const r of referrals) {
+      const name = r.referrer?.name ?? "Unknown";
+      const e = refMap.get(name) ?? { total: 0, hired: 0 };
+      e.total += 1;
+      if (r.status === "HIRED") e.hired += 1;
+      refMap.set(name, e);
+    }
+    const topReferrers = [...refMap.entries()]
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.hired - a.hired || b.total - a.total)
+      .slice(0, 5);
+
+    // Average time-to-hire: first stage event → the HIRED event, in days.
+    const durations: number[] = [];
+    for (const a of apps) {
+      const hired = a.stageEvents.find((e) => e.toStage === "HIRED");
+      if (!hired) continue;
+      const first = [...a.stageEvents].sort(
+        (x, y) => x.createdAt.getTime() - y.createdAt.getTime(),
+      )[0];
+      if (!first) continue;
+      const days = (hired.createdAt.getTime() - first.createdAt.getTime()) / 86_400_000;
+      if (days >= 0) durations.push(days);
+    }
+    const avgTimeToHireDays = durations.length
+      ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+      : null;
+
+    const totalRef = referrals.length;
+    const hiredRef = referrals.filter((r) => r.status === "HIRED").length;
+
+    return {
+      totals: {
+        applications: apps.length,
+        hired: apps.filter((a) => a.stage === "HIRED").length,
+        openPositions,
+        candidates,
+      },
+      funnel,
+      stageCounts,
+      sourceBreakdown,
+      byDepartment,
+      topReferrers,
+      avgTimeToHireDays,
+      referralConversionRate: totalRef === 0 ? 0 : hiredRef / totalRef,
     };
   }
 }

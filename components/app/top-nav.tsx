@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 
 import { Logo } from "@/components/brand/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { AskHyre } from "@/components/app/assistant";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,6 @@ export function TopNav({ user }: { user: UserRecord }) {
             <Search className="size-4" />
           </Link>
           <AskHyre />
-          <ThemeToggle />
 
           {/* User menu */}
           <DropdownMenu>

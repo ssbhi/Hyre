@@ -30,6 +30,7 @@ import type {
 
 import type { HyreRepository } from "../repository";
 import type {
+  AnalyticsData,
   ApplicationDetail,
   ApplicationRecord,
   CandidatePipelineFilter,
@@ -129,10 +130,21 @@ export class SheetsRepository implements HyreRepository {
   upsertUser(_input: UserInput): Promise<UserRecord> {
     return notImplemented("upsertUser");
   }
+  createUser(_input: {
+    name: string;
+    email: string;
+    role: Role;
+    passwordHash?: string | null;
+  }): Promise<UserRecord> {
+    return notImplemented("createUser");
+  }
   verifyCredentials(_email: string, _password: string): Promise<UserRecord | null> {
     return notImplemented("verifyCredentials");
   }
   getDashboardStats(): Promise<DashboardStats> {
     return notImplemented("getDashboardStats");
+  }
+  getAnalytics(): Promise<AnalyticsData> {
+    return notImplemented("getAnalytics");
   }
 }

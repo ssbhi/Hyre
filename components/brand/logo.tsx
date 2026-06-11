@@ -13,7 +13,7 @@ export function Logo({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-violet-500 text-primary-foreground shadow-sm">
+      <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-cyan-400 text-primary-foreground shadow-sm">
         <svg viewBox="0 0 24 24" className="size-4.5" fill="none" aria-hidden>
           <path
             d="M6 5v14M6 12h8M14 5v14"
@@ -31,7 +31,7 @@ export function Logo({
         </svg>
       </span>
       {showWordmark && (
-        <span className="text-lg font-semibold tracking-tight">Hyre</span>
+        <span className="text-lg font-semibold tracking-tight">True Hire</span>
       )}
     </span>
   );

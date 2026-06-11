@@ -6,7 +6,7 @@ import { repo } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Careers",
-  description: "Open roles at Hyre. Browse and apply.",
+  description: "Open roles at True Hire. Browse and apply.",
 };
 
 export default async function CareersPage() {

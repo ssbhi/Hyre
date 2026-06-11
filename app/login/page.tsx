@@ -19,7 +19,7 @@ export default async function LoginPage() {
           <Logo />
         </div>
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
-          <h1 className="text-lg font-semibold tracking-tight">Sign in to Hyre</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Sign in to True Hire</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Welcome back. Enter your credentials to continue.
           </p>

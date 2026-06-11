@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import {
   ArrowRight,
   Briefcase,
+  CalendarCheck,
   Inbox,
   Plus,
-  SendHorizontal,
   Star,
   UserCheck,
   Users,
@@ -72,13 +72,13 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stat tiles */}
+      {/* Stat tiles — quick status of jobs & applicants */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatTile label="Active jobs" value={stats.openPositions} icon={Briefcase} accent hint="Currently published" />
-        <StatTile label="New this week" value={newThisWeek} icon={Inbox} hint="Applications in 7 days" />
-        <StatTile label="To review" value={toReview} icon={Users} hint="Applied + screening" />
+        <StatTile label="New applications" value={newThisWeek} icon={Inbox} hint="In the last 7 days" />
+        <StatTile label="To be reviewed" value={toReview} icon={Users} hint="Applied + screening" />
         <StatTile label="Shortlisted" value={stageCount("SHORTLISTED")} icon={Star} hint="Awaiting interview" />
-        <StatTile label="Offers out" value={stageCount("OFFER_EXTENDED")} icon={SendHorizontal} hint="Pending response" />
+        <StatTile label="Interviews scheduled" value={stageCount("INTERVIEW_SCHEDULED")} icon={CalendarCheck} hint="Upcoming interviews" />
       </div>
 
       {/* Funnel + referral snapshot */}

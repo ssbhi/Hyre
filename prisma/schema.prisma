@@ -1,0 +1,193 @@
+// Hyre — data model
+// Note: SQLite has no native enum/array types. Enums are stored as String and
+// validated by Zod (see lib/schemas). Array-like fields (skills) are stored as
+// JSON strings. The schema is written to migrate cleanly to PostgreSQL later —
+// at that point String enum columns can be promoted to real Postgres enums.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Users & access
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         String   @default("EMPLOYEE") // HR_ADMIN | EMPLOYEE | CANDIDATE
+  passwordHash String? // scrypt salt:hash; null = no password set (can't log in)
+  title      String?
+  department String?
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  jobsAsHiringManager Job[]               @relation("JobHiringManager")
+  jobsAsRecruiter     Job[]               @relation("JobRecruiter")
+  applicationsOwned   Application[]       @relation("ApplicationRecruiter")
+  referralsMade       Referral[]          @relation("ReferralReferrer")
+  notesAuthored       Note[]
+  stageChanges        StageEvent[]
+  feedbackGiven       InterviewFeedback[]
+}
+
+// ---------------------------------------------------------------------------
+// Jobs
+// ---------------------------------------------------------------------------
+
+model Job {
+  id             String   @id @default(cuid())
+  title          String
+  slug           String   @unique
+  department     String
+  employmentType String   @default("FULL_TIME") // FULL_TIME | PART_TIME | CONTRACT | INTERNSHIP | TEMPORARY
+  location       String
+  locationType   String   @default("ONSITE") // ONSITE | REMOTE | HYBRID
+  description    String
+  requiredSkills String   @default("[]") // JSON array of strings
+  openings       Int      @default(1)
+  status         String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  postedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  hiringManagerId String?
+  hiringManager   User?   @relation("JobHiringManager", fields: [hiringManagerId], references: [id])
+  recruiterId     String?
+  recruiter       User?   @relation("JobRecruiter", fields: [recruiterId], references: [id])
+
+  applications Application[]
+  referrals    Referral[]
+
+  @@index([status])
+  @@index([department])
+}
+
+// ---------------------------------------------------------------------------
+// Candidates
+// ---------------------------------------------------------------------------
+
+model Candidate {
+  id                   String   @id @default(cuid())
+  name                 String
+  email                String   @unique
+  phone                String?
+  location             String?
+  currentEmployer      String?
+  currentTitle         String?
+  totalExperienceYears Float?
+  noticePeriodDays     Int?
+  currentCtc           String?
+  expectedCtc          String?
+  linkedinUrl          String?
+  portfolioUrl         String?
+  resumeUrl            String?
+  skills               String   @default("[]") // JSON array of strings
+  source               String   @default("CAREER_PORTAL") // CAREER_PORTAL | REFERRAL | MANUAL
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  applications Application[]
+  referrals    Referral[]
+}
+
+// ---------------------------------------------------------------------------
+// Applications (a candidate's progress on one job) — the ATS pipeline
+// ---------------------------------------------------------------------------
+
+model Application {
+  id          String   @id @default(cuid())
+  stage       String   @default("APPLIED") // see lib/schemas/enums.ts → PIPELINE_STAGES
+  coverNote   String?
+  rejectedReason String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  recruiterId String?
+  recruiter   User?     @relation("ApplicationRecruiter", fields: [recruiterId], references: [id])
+
+  notes       Note[]
+  stageEvents StageEvent[]
+  feedback    InterviewFeedback[]
+  referral    Referral?
+
+  @@unique([jobId, candidateId])
+  @@index([stage])
+}
+
+// ---------------------------------------------------------------------------
+// Referrals
+// ---------------------------------------------------------------------------
+
+model Referral {
+  id           String   @id @default(cuid())
+  status       String   @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | SHORTLISTED | INTERVIEWING | HIRED | REJECTED
+  relationship String?
+  comment      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  jobId       String
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  referrerId  String
+  referrer    User      @relation("ReferralReferrer", fields: [referrerId], references: [id])
+
+  applicationId String?      @unique
+  application   Application? @relation(fields: [applicationId], references: [id])
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Activity: notes, stage history, interview feedback
+// ---------------------------------------------------------------------------
+
+model Note {
+  id            String   @id @default(cuid())
+  body          String
+  createdAt     DateTime @default(now())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  authorId      String?
+  author        User?       @relation(fields: [authorId], references: [id])
+}
+
+model StageEvent {
+  id            String   @id @default(cuid())
+  fromStage     String?
+  toStage       String
+  note          String?
+  createdAt     DateTime @default(now())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  changedById   String?
+  changedBy     User?       @relation(fields: [changedById], references: [id])
+}
+
+model InterviewFeedback {
+  id             String   @id @default(cuid())
+  round          String?
+  rating         Int? // 1..5
+  recommendation String? // STRONG_YES | YES | NO | STRONG_NO
+  strengths      String?
+  concerns       String?
+  comments       String?
+  createdAt      DateTime @default(now())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewerId  String?
+  interviewer    User?       @relation(fields: [interviewerId], references: [id])
+}

@@ -29,11 +29,13 @@ function Field({
   label,
   htmlFor,
   error,
+  hint,
   children,
 }: {
   label: string;
   htmlFor?: string;
   error?: string;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -41,6 +43,7 @@ function Field({
       <label htmlFor={htmlFor} className="text-sm font-medium">
         {label}
       </label>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -225,7 +228,12 @@ export function JobForm({
         </Field>
       </div>
 
-      <Field label="Required skills" htmlFor="skills" error={errors.requiredSkills}>
+      <Field
+        label="What we're looking for"
+        htmlFor="skills"
+        error={errors.requiredSkills}
+        hint="Skills applicants see under “What we're looking for”. Add the most relevant ones."
+      >
         <div className="rounded-lg border bg-background p-2">
           {skills.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -266,7 +274,12 @@ export function JobForm({
         </div>
       </Field>
 
-      <Field label="Job description" htmlFor="description" error={errors.description}>
+      <Field
+        label="About the role"
+        htmlFor="description"
+        error={errors.description}
+        hint="Shown to applicants as the “About the role” section — describe the role, responsibilities, and expectations."
+      >
         <Textarea
           id="description"
           value={description}
