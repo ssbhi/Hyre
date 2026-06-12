@@ -15,7 +15,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
  * these sign in with email + password; the FIRST sign-in provisions the HR
  * account and sets that password. Only these emails get HR access this way.
  */
-export const HR_ALLOWLIST = [
+const HR_ALLOWLIST = [
   "shobhit.soni.ap@balancehero.com",
   "pawan.dobhal@truecredits.in",
   "sudhir.yadav@truecredits.in",

@@ -112,6 +112,11 @@ export default async function HomePage() {
               </span>
             </h1>
           </Reveal>
+          <Reveal delay={0.08}>
+            <p className="mx-auto mt-5 text-xl font-bold tracking-tight text-primary sm:text-2xl">
+              Hire Smarter to Grow Faster !!!
+            </p>
+          </Reveal>
           <Reveal delay={0.1}>
             <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
               Discover and apply to open roles across True Balance in just a few
