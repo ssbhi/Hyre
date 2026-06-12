@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: "Open roles at True Hire. Browse and apply.",
 };
 
+// Jobs come from the database — render per request, never bake at build time.
+export const dynamic = "force-dynamic";
+
 export default async function CareersPage() {
   const jobs = await repo.listPublishedJobs();
   const departments = [...new Set(jobs.map((j) => j.department))].sort();

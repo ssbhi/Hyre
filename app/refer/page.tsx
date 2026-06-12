@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "Know someone great? Refer them for an open role.",
 };
 
+// Role list comes from the database — render per request, never bake at build time.
+export const dynamic = "force-dynamic";
+
 export default async function ReferPage() {
   const jobs = await repo.listPublishedJobs();
   const jobOptions = jobs.map((j) => ({ id: j.id, title: j.title }));

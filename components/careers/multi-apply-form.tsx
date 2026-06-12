@@ -114,11 +114,11 @@ export function MultiApplyForm({
         <Field label="Location" name="location" error={errors.location}>
           <Input id="location" name="location" placeholder="City, Country" />
         </Field>
-        <Field label="Current title" name="currentTitle" error={errors.currentTitle}>
-          <Input id="currentTitle" name="currentTitle" />
-        </Field>
         <Field label="Current employer" name="currentEmployer" error={errors.currentEmployer}>
           <Input id="currentEmployer" name="currentEmployer" />
+        </Field>
+        <Field label="Current title" name="currentTitle" error={errors.currentTitle}>
+          <Input id="currentTitle" name="currentTitle" />
         </Field>
         <Field label="Years of experience" name="totalExperienceYears" error={errors.totalExperienceYears}>
           <Input id="totalExperienceYears" name="totalExperienceYears" type="number" min={0} step="0.5" />
@@ -144,6 +144,10 @@ export function MultiApplyForm({
         <Input id="skills" name="skills" placeholder="React, TypeScript, Node.js" />
       </Field>
 
+      <Field label="Cover note" name="coverNote" error={errors.coverNote}>
+        <Textarea id="coverNote" name="coverNote" rows={4} placeholder="Anything you'd like us to know (optional)" />
+      </Field>
+
       <Field label="Resume (PDF only, max 10 MB)" name="resume" error={errors.resume}>
         <label
           htmlFor="resume"
@@ -164,10 +168,6 @@ export function MultiApplyForm({
             }}
           />
         </label>
-      </Field>
-
-      <Field label="Cover note" name="coverNote" error={errors.coverNote}>
-        <Textarea id="coverNote" name="coverNote" rows={4} placeholder="Anything you'd like us to know (optional)" />
       </Field>
 
       <div className="flex items-center justify-end gap-2 border-t pt-4">

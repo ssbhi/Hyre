@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env*
+prisma/dev.db
+public/uploads
+data
+uploads
+tsconfig.tsbuildinfo
+apps-script
+*.md
+!README.md

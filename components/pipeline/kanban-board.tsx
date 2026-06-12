@@ -15,7 +15,7 @@ export type PipelineCard = ApplicationRecord & { referrerName?: string | null };
 
 /** The five visible columns and which ATS stages each one collects. */
 const COLUMNS: { key: string; label: string; dot: string; stages: PipelineStage[] }[] = [
-  { key: "applied", label: "Applied", dot: "bg-violet-500", stages: ["APPLIED"] },
+  { key: "applied", label: "Applied", dot: "bg-primary", stages: ["APPLIED"] },
   { key: "screening", label: "Screening", dot: "bg-sky-500", stages: ["SCREENING", "SHORTLISTED"] },
   {
     key: "interview",
@@ -33,7 +33,7 @@ const COLUMNS: { key: string; label: string; dot: string; stages: PipelineStage[
 ];
 
 const AVATAR_COLORS = [
-  "bg-violet-100 text-violet-700",
+  "bg-accent text-accent-foreground",
   "bg-sky-100 text-sky-700",
   "bg-amber-100 text-amber-700",
   "bg-emerald-100 text-emerald-700",
@@ -129,7 +129,7 @@ function CandidateCard({
         <div className="min-w-0 flex-1">
           <Link
             href={`/candidates/${app.id}`}
-            className="block truncate text-sm font-semibold text-slate-900 hover:text-violet-700"
+            className="block truncate text-sm font-semibold text-slate-900 hover:text-primary"
           >
             {name}
           </Link>
@@ -144,7 +144,7 @@ function CandidateCard({
               Referral
             </span>
             {app.referrerName && (
-              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                 via {app.referrerName.split(" ")[0]}
               </span>
             )}
@@ -164,7 +164,7 @@ function CandidateCard({
         value={app.stage}
         onChange={(e) => onMove(app.id, e.target.value as PipelineStage)}
         aria-label={`Stage for ${name}`}
-        className="mt-3 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        className="mt-3 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
         {PIPELINE_STAGES.map((s) => (
           <option key={s} value={s}>

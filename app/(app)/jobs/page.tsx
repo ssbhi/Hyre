@@ -33,7 +33,7 @@ export default async function JobsPage() {
             Open roles visible to employees and external applicants.
           </p>
         </div>
-        <PostJobDialog className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500">
+        <PostJobDialog className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
           <Plus className="size-4" />
           Post a job
         </PostJobDialog>
@@ -43,7 +43,7 @@ export default async function JobsPage() {
         <div className="grid place-items-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
           <p className="text-sm text-slate-500">
             No roles yet.{" "}
-            <Link href="/jobs/new" className="font-semibold text-violet-600 hover:text-violet-700">
+            <Link href="/jobs/new" className="font-semibold text-primary hover:text-primary/80">
               Post one
             </Link>
             .
@@ -61,7 +61,7 @@ export default async function JobsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     href={`/jobs/${j.id}`}
-                    className="text-lg font-semibold text-slate-900 hover:text-violet-700"
+                    className="text-lg font-semibold text-slate-900 hover:text-primary"
                   >
                     {j.title}
                   </Link>
@@ -81,7 +81,7 @@ export default async function JobsPage() {
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Tag className="bg-violet-50 text-violet-700">
+                  <Tag className="bg-accent text-accent-foreground">
                     {j.openings} {j.openings === 1 ? "opening" : "openings"}
                   </Tag>
                   <Tag className="bg-sky-50 text-sky-700">

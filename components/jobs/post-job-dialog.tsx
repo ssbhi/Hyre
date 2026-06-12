@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { EMPLOYMENT_TYPES, EMPLOYMENT_TYPE_LABELS } from "@/lib/schemas/enums";
 
-const field = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+const field = "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 const labelCls = "text-sm font-semibold text-slate-700";
 
 export function PostJobDialog({
@@ -84,7 +84,7 @@ export function PostJobDialog({
           </div>
 
           <label className="flex items-center gap-2.5 text-sm font-medium text-slate-700">
-            <input type="checkbox" name="internalEligible" defaultChecked className="size-4 rounded border-slate-300 text-violet-600 focus-visible:ring-violet-500/40" />
+            <input type="checkbox" name="internalEligible" defaultChecked className="size-4 rounded border-slate-300 accent-(--tb-orange) focus-visible:ring-ring/50" />
             Internal candidates can apply
           </label>
 
@@ -101,7 +101,7 @@ export function PostJobDialog({
               rows={5}
               required
               placeholder="Describe the role, responsibilities, and what you're looking for…"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             />
           </div>
 
@@ -109,7 +109,7 @@ export function PostJobDialog({
             <label className={labelCls}>Upload JD (optional)</label>
             <label
               htmlFor="pj-jd"
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-500 transition-colors hover:border-violet-400 hover:text-slate-700"
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-500 transition-colors hover:border-primary/40 hover:text-slate-700"
             >
               <Paperclip className="size-4" />
               <span>Attach a JD (PDF or Word)</span>
@@ -131,7 +131,7 @@ export function PostJobDialog({
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-60"
+            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             {pending ? "Publishing…" : "Publish job"}
           </button>

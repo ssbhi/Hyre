@@ -137,33 +137,55 @@
   }
 }
 
-/* --- Brand palette: orange + white + black ----------------------------
-   Orange primary on a white background with near-black text. Chart ramp stays
-   in the orange/amber family. Defined last so these win over the defaults. */
+/* --- TrueBalance design tokens (applied last, so these win) -------------
+   Brand palette, neutral surfaces, ink, and status colors from the
+   TrueBalance design playbook. Move 1: soft ink (#131E29), never raw black.
+   Move 2: orange is reserved for primary actions only. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.16 0 0);
-  --primary: oklch(0.64 0.2 42);
-  --primary-foreground: oklch(0.99 0 0);
-  --ring: oklch(0.64 0.2 42);
-  --chart-1: oklch(0.66 0.2 42);
-  --chart-2: oklch(0.72 0.17 55);
-  --chart-3: oklch(0.78 0.15 72);
-  --chart-4: oklch(0.6 0.19 30);
-  --chart-5: oklch(0.55 0.17 22);
-  --sidebar-primary: oklch(0.64 0.2 42);
-  --sidebar-ring: oklch(0.64 0.2 42);
-}
+  /* Brand */
+  --tb-orange: #fa823b;
+  --tb-orange-press: #e36c25;
+  --tb-orange-soft: #fef2eb;
+  /* Surface & ink */
+  --tb-bg: #ffffff;
+  --tb-surface: #f5f5f5;
+  --tb-border: #dcdddf;
+  --tb-text: #131e29;
+  --tb-text-sub: #7e868d;
+  /* Status */
+  --tb-error: #ff2e34;
+  --tb-success: #1db66b;
+  --tb-info: #1879ff;
+  --tb-warning: #eb9d00;
+  /* Lift (Move 4) */
+  --tb-shadow-subtle: 0 0 2px 0 rgb(0 0 0 / 0.12);
+  --tb-shadow-card: 0 0 8px 0 rgb(0 0 0 / 0.12);
+  --tb-shadow-raised: 0 8px 8px 0 rgb(0 0 0 / 0.12);
 
-.dark {
-  --primary: oklch(0.7 0.19 45);
-  --primary-foreground: oklch(0.2 0.02 40);
-  --ring: oklch(0.7 0.19 45);
-  --chart-1: oklch(0.7 0.19 45);
-  --chart-2: oklch(0.75 0.16 60);
-  --chart-3: oklch(0.8 0.14 75);
-  --chart-4: oklch(0.65 0.18 30);
-  --chart-5: oklch(0.6 0.16 22);
-  --sidebar-primary: oklch(0.7 0.19 45);
-  --sidebar-ring: oklch(0.7 0.19 45);
+  /* Map the app's semantic tokens onto TrueBalance */
+  --background: var(--tb-bg);
+  --foreground: var(--tb-text);
+  --card: #ffffff;
+  --card-foreground: var(--tb-text);
+  --popover: #ffffff;
+  --popover-foreground: var(--tb-text);
+  --primary: var(--tb-orange);
+  --primary-foreground: #ffffff;
+  --secondary: var(--tb-surface);
+  --secondary-foreground: var(--tb-text);
+  --muted: var(--tb-surface);
+  --muted-foreground: var(--tb-text-sub);
+  --accent: var(--tb-orange-soft);
+  --accent-foreground: var(--tb-orange-press);
+  --destructive: var(--tb-error);
+  --border: var(--tb-border);
+  --input: var(--tb-border);
+  --ring: var(--tb-info);
+  --chart-1: var(--tb-orange);
+  --chart-2: #f7a05f;
+  --chart-3: #f9c79e;
+  --chart-4: var(--tb-success);
+  --chart-5: var(--tb-info);
+  --sidebar-primary: var(--tb-orange);
+  --sidebar-ring: var(--tb-orange);
 }

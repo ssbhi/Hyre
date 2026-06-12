@@ -1,0 +1,17 @@
+# True Hire on the hackathon box. Port 8080 is the only internet-facing port;
+# the platform routes https://<team-slug>.hackathon.afinit.dev → :8080.
+services:
+  web:
+    build: .
+    ports:
+      - "8080:3000"
+    restart: unless-stopped
+    # .env on the box provides AUTH_SECRET (+ optional SHEETS_* vars).
+    env_file: .env
+    environment:
+      # Force the container DB path (overrides any DATABASE_URL in .env).
+      DATABASE_URL: file:/app/data/prod.db
+      PORT: 3000
+    volumes:
+      - ./data:/app/data # SQLite — survives rebuilds/restarts
+      - ./uploads:/app/public/uploads # resumes & JDs — survives rebuilds/restarts

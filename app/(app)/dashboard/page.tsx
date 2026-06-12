@@ -33,7 +33,7 @@ export default async function DashboardPage() {
 
   // Collapse the 8 ATS stages into the 5 funnel buckets the design shows.
   const funnel = [
-    { label: "Applied", count: stageCount("APPLIED"), color: "bg-violet-500" },
+    { label: "Applied", count: stageCount("APPLIED"), color: "bg-primary" },
     {
       label: "Screening",
       count: stageCount("SCREENING") + stageCount("SHORTLISTED"),
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/candidates"
-            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700"
+            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80"
           >
             Open full pipeline <ArrowRight className="size-4" />
           </Link>
@@ -142,7 +142,7 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/referrals"
-            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700"
+            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80"
           >
             View referral tracker <ArrowRight className="size-4" />
           </Link>
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
 }
 
 const ACCENTS = {
-  violet: { border: "border-t-violet-500", text: "text-violet-600" },
+  violet: { border: "border-t-primary", text: "text-primary" },
   sky: { border: "border-t-sky-500", text: "text-sky-600" },
   amber: { border: "border-t-amber-500", text: "text-amber-600" },
   emerald: { border: "border-t-emerald-500", text: "text-emerald-600" },

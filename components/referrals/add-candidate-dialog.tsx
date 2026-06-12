@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 const field =
-  "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40";
+  "h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
 const labelCls = "text-sm font-semibold text-slate-700";
 
 export function AddCandidateDialog({
@@ -97,14 +97,14 @@ export function AddCandidateDialog({
               name="comment"
               rows={3}
               placeholder="Optional — résumé link, context, etc."
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             />
           </div>
 
           <button
             type="submit"
             disabled={pending || jobs.length === 0}
-            className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-60"
+            className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save candidate"}
           </button>

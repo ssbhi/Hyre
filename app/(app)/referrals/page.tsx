@@ -58,7 +58,7 @@ export default async function ReferralsPage() {
         <AddCandidateDialog
           jobs={jobOptions}
           defaultSource="REFERRAL"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="size-4" />
           Submit a referral
@@ -70,7 +70,7 @@ export default async function ReferralsPage() {
           <Gift className="size-8 text-slate-300" />
           <p className="mt-3 text-sm text-slate-500">
             No referrals yet.{" "}
-            <Link href="/referrals/new" className="font-semibold text-violet-600 hover:text-violet-700">
+            <Link href="/referrals/new" className="font-semibold text-primary hover:text-primary/80">
               Refer someone
             </Link>
             .
@@ -97,7 +97,7 @@ export default async function ReferralsPage() {
                     <tr key={r.id}>
                       <td className="px-5 py-3.5 font-semibold text-slate-900">
                         {r.applicationId ? (
-                          <Link href={`/candidates/${r.applicationId}`} className="hover:text-violet-700">
+                          <Link href={`/candidates/${r.applicationId}`} className="hover:text-primary">
                             {r.candidate.name}
                           </Link>
                         ) : (

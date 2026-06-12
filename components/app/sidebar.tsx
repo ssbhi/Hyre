@@ -45,12 +45,12 @@ export function Sidebar({
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-[#0c1424] text-slate-300">
+    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col bg-[#131e29] text-slate-300">
       {/* Brand */}
       <div className="px-6 pb-6 pt-7">
         <Link href="/dashboard" className="text-2xl font-bold tracking-tight">
           <span className="text-white">True Hire</span>{" "}
-          <span className="text-violet-400">HR</span>
+          <span className="text-primary">HR</span>
         </Link>
         <p className="mt-1 text-xs text-slate-400">Hiring &amp; referrals, one loop</p>
       </div>
@@ -67,7 +67,7 @@ export function Sidebar({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-slate-300 hover:bg-white/5 hover:text-white",
               )}
             >
@@ -83,7 +83,7 @@ export function Sidebar({
         <AddCandidateDialog
           jobs={jobs}
           defaultSource="DIRECT"
-          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="size-4" />
           Add candidate / referral
@@ -96,7 +96,7 @@ export function Sidebar({
 
       {/* User */}
       <div className="flex items-center gap-2.5 border-t border-white/10 px-4 py-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-violet-600 text-xs font-semibold text-white">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {initials(user.name)}
         </span>
         <div className="min-w-0 flex-1">

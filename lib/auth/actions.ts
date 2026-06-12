@@ -85,6 +85,11 @@ export async function login(formData: FormData): Promise<LoginResult> {
     if (!verified) {
       return { ok: false, error: "Invalid email or password." };
     }
+    // Allowlisted company emails always get HR access — promote the account if
+    // it was first created as a candidate (e.g. via the apply flow).
+    if (verified.role !== "HR_ADMIN") {
+      await repo.upsertUser({ name: verified.name, email, role: "HR_ADMIN" });
+    }
     await createSession(verified.id);
     return { ok: true };
   }

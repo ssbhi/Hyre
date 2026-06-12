@@ -54,6 +54,9 @@ const leadership = [
   { name: "Sayantan Ghosh", title: "Chief Risk Officer", bio: "12+ yrs · ML & risk, ex-American Express", photo: "/team/sayantan-ghosh.jpg" },
 ];
 
+// Job counts come from the database — render per request, never bake at build time.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const jobs = await repo.listPublishedJobs();
   const departments = new Set(jobs.map((j) => j.department));

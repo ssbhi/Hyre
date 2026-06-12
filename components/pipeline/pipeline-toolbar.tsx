@@ -49,11 +49,11 @@ export function PipelineToolbar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, email or referrer…"
-          className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-3 pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-white pr-3 pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         />
       </div>
       <select
-        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         value={jobId}
         onChange={(e) => setJob(e.target.value)}
       >
