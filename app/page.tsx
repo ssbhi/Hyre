@@ -45,13 +45,13 @@ const testimonials = [
 // present, else fall back to initials (see TeamAvatar). Names/titles are factual.
 const leadership = [
   { name: "Charlie Lee", title: "Founder & CEO", bio: "Ex-RealNetworks · MPP, University of Chicago", photo: "/team/charlie-lee.jpg" },
+  { name: "Jack Yoon", title: "Chief PI Officer", bio: "17+ yrs · Serial entrepreneur", photo: "/team/jack-yoon.jpg" },
   { name: "Jay Yi", title: "Co-Founder & CPTO", bio: "Founder of pxd · MDes, Carnegie Mellon", photo: "/team/jay-yi.jpg" },
-  { name: "Soumyajit Ghosh", title: "Chief Operating Officer", bio: "18+ yrs · ISI alumnus, fintech analytics", photo: "/team/soumyajit-ghosh.jpg" },
+  { name: "Sayantan Ghosh", title: "Chief Risk Officer", bio: "12+ yrs · ML & risk, ex-American Express", photo: "/team/sayantan-ghosh.jpg" },
   { name: "Anupam Vasdani", title: "Group CFO", bio: "20+ yrs · Fundraising & investor relations", photo: "/team/anupam-vasdani.jpg" },
   { name: "Debarya Dutta", title: "Chief AI Officer", bio: "MS in AI, Cambridge · ex-Uber", photo: "/team/debarya-dutta.jpg" },
-  { name: "Jack Yoon", title: "Chief PI Officer", bio: "17+ yrs · Serial entrepreneur", photo: "/team/jack-yoon.jpg" },
+  { name: "Soumyajit Ghosh", title: "Chief Operating Officer", bio: "18+ yrs · ISI alumnus, fintech analytics", photo: "/team/soumyajit-ghosh.jpg" },
   { name: "Gaurav Sharma", title: "CHRO", bio: "22+ yrs · ex-HR Director, Gionee India", photo: "/team/gaurav-sharma.jpg" },
-  { name: "Sayantan Ghosh", title: "Chief Risk Officer", bio: "12+ yrs · ML & risk, ex-American Express", photo: "/team/sayantan-ghosh.jpg" },
 ];
 
 // Job counts come from the database — render per request, never bake at build time.
