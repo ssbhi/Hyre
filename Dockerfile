@@ -10,9 +10,11 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 
 # Install dependencies first so Docker layer-caches them.
-# Dev deps are kept on purpose: the entrypoint needs `prisma` (db push) and `tsx` (seed).
+# --include=dev is required because NODE_ENV=production would otherwise skip
+# devDependencies — and the build needs Tailwind/PostCSS, while the entrypoint
+# needs `prisma` (db push) and `tsx` (seed).
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Generate the Prisma client, then build the app.
 COPY prisma ./prisma
