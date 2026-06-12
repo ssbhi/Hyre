@@ -10,6 +10,26 @@ export type LoginResult = { ok: true } | { ok: false; error: string };
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
+/**
+ * Company emails allowed to sign in as HR Admin. Until Google SSO is wired,
+ * these sign in with email + password; the FIRST sign-in provisions the HR
+ * account and sets that password. Only these emails get HR access this way.
+ */
+export const HR_ALLOWLIST = [
+  "shobhit.soni.ap@balancehero.com",
+  "pawan.dobhal@truecredits.in",
+  "sudhir.yadav@truecredits.in",
+];
+
+function nameFromEmail(email: string): string {
+  return email
+    .split("@")[0]
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+}
+
 /** Candidate self-service signup. Creates a CANDIDATE account and signs them in. */
 export async function signup(formData: FormData): Promise<LoginResult> {
   const name = String(formData.get("name") ?? "").trim();
@@ -42,6 +62,31 @@ export async function login(formData: FormData): Promise<LoginResult> {
 
   if (!email || !password) {
     return { ok: false, error: "Enter your email and password." };
+  }
+
+  // Allowlisted company emails sign in as HR Admin. First sign-in provisions
+  // the account and sets the password; later sign-ins verify it.
+  if (HR_ALLOWLIST.includes(email)) {
+    if (password.length < 6) {
+      return { ok: false, error: "Choose a password of at least 6 characters." };
+    }
+    const existing = await repo.getUserByEmail(email);
+    if (!existing) {
+      const created = await repo.createUser({
+        name: nameFromEmail(email),
+        email,
+        role: "HR_ADMIN",
+        passwordHash: hashPassword(password),
+      });
+      await createSession(created.id);
+      return { ok: true };
+    }
+    const verified = await repo.verifyCredentials(email, password);
+    if (!verified) {
+      return { ok: false, error: "Invalid email or password." };
+    }
+    await createSession(verified.id);
+    return { ok: true };
   }
 
   const user = await repo.verifyCredentials(email, password);

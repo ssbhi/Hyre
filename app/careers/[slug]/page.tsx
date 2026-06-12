@@ -60,6 +60,16 @@ export default async function CareerJobPage({ params }: { params: Promise<{ slug
       <section className="mt-8">
         <h2 className="text-lg font-semibold">About the role</h2>
         <p className="mt-2 text-sm whitespace-pre-wrap text-foreground/90">{job.description}</p>
+        {job.jdUrl && (
+          <a
+            href={job.jdUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            Download full job description
+          </a>
+        )}
       </section>
 
       {job.requiredSkills.length > 0 && (

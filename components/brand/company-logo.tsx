@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 /**
  * Site brand lockup: a small logo mark + the "True Hire" wordmark.
  *
- * The mark loads from /public/true-hire-logo.png. Drop your logo there and it
- * appears automatically; until then it falls back to the existing True Balance
- * mark, so there's never a broken image.
+ * The mark loads from /public/true-balance-logo.webp. Replace that file to swap
+ * the logo everywhere; if it's ever missing it falls back to the same path, so
+ * there's never a broken image.
  */
-const PRIMARY_LOGO = "/true-hire-logo.png";
+const PRIMARY_LOGO = "/true-balance-logo.webp";
 const FALLBACK_LOGO = "/true-balance-logo.webp";
 
 export function CompanyLogo({ className }: { className?: string }) {

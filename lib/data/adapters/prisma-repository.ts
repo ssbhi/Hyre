@@ -19,6 +19,7 @@ import type {
   ApplicationInput,
   FeedbackInput,
   JobInput,
+  ManualCandidateInput,
   NoteInput,
   ReferralInput,
   ReferralStatusUpdate,
@@ -117,6 +118,8 @@ function mapJob(j: JobRow): JobRecord {
     locationType: j.locationType as JobRecord["locationType"],
     description: j.description,
     requiredSkills: parseSkills(j.requiredSkills),
+    jdUrl: j.jdUrl ?? null,
+    internalEligible: j.internalEligible,
     openings: j.openings,
     status: j.status as JobRecord["status"],
     postedAt: iso(j.postedAt),
@@ -256,6 +259,8 @@ export class PrismaRepository implements HyreRepository {
         locationType: input.locationType,
         description: input.description,
         requiredSkills: JSON.stringify(input.requiredSkills),
+        jdUrl: input.jdUrl ?? null,
+        internalEligible: input.internalEligible,
         openings: input.openings,
         status: input.status,
         postedAt: input.status === "PUBLISHED" ? new Date() : null,
@@ -279,6 +284,8 @@ export class PrismaRepository implements HyreRepository {
         locationType: input.locationType,
         description: input.description,
         requiredSkills: JSON.stringify(input.requiredSkills),
+        jdUrl: input.jdUrl ?? null,
+        internalEligible: input.internalEligible,
         openings: input.openings,
         status: input.status,
         // Stamp postedAt the first time a job is published.
@@ -319,6 +326,8 @@ export class PrismaRepository implements HyreRepository {
         locationType: src.locationType,
         description: src.description,
         requiredSkills: src.requiredSkills,
+        jdUrl: src.jdUrl,
+        internalEligible: src.internalEligible,
         openings: src.openings,
         status: "DRAFT",
         hiringManagerId: src.hiringManagerId,
@@ -458,6 +467,42 @@ export class PrismaRepository implements HyreRepository {
         coverNote: input.coverNote,
         stage: "APPLIED",
         stageEvents: { create: { toStage: "APPLIED", note: "Applied via career portal" } },
+      },
+      include: { recruiter: true, job: true, candidate: true },
+    });
+    return mapApplication(created);
+  }
+
+  async addManualCandidate(input: ManualCandidateInput): Promise<ApplicationRecord> {
+    const email = input.email.toLowerCase();
+    const candidate = await prisma.candidate.upsert({
+      where: { email },
+      create: {
+        name: input.name,
+        email,
+        phone: input.phone,
+        skills: "[]",
+        source: "MANUAL",
+      },
+      update: {
+        name: input.name,
+        phone: input.phone ?? undefined,
+      },
+    });
+
+    const existing = await prisma.application.findUnique({
+      where: { jobId_candidateId: { jobId: input.jobId, candidateId: candidate.id } },
+      include: { recruiter: true, job: true, candidate: true },
+    });
+    if (existing) return mapApplication(existing);
+
+    const created = await prisma.application.create({
+      data: {
+        jobId: input.jobId,
+        candidateId: candidate.id,
+        coverNote: input.comment,
+        stage: "APPLIED",
+        stageEvents: { create: { toStage: "APPLIED", note: "Added by HR" } },
       },
       include: { recruiter: true, job: true, candidate: true },
     });

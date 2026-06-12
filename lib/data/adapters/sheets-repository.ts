@@ -20,6 +20,7 @@ import type {
   ApplicationInput,
   FeedbackInput,
   JobInput,
+  ManualCandidateInput,
   NoteInput,
   ReferralInput,
   ReferralStatusUpdate,
@@ -90,6 +91,9 @@ export class SheetsRepository implements HyreRepository {
   }
   applyToJob(_input: ApplicationInput): Promise<ApplicationRecord> {
     return notImplemented("applyToJob");
+  }
+  addManualCandidate(_input: ManualCandidateInput): Promise<ApplicationRecord> {
+    return notImplemented("addManualCandidate");
   }
   moveStage(_input: StageUpdate, _actorId?: string): Promise<ApplicationRecord> {
     return notImplemented("moveStage");

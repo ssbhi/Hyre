@@ -10,6 +10,7 @@ import type {
   ApplicationInput,
   FeedbackInput,
   JobInput,
+  ManualCandidateInput,
   NoteInput,
   ReferralInput,
   ReferralStatusUpdate,
@@ -52,6 +53,8 @@ export interface HyreRepository {
   getApplicationDetail(id: string): Promise<ApplicationDetail | null>;
   /** Career-portal apply: upserts the candidate, then creates the application. */
   applyToJob(input: ApplicationInput): Promise<ApplicationRecord>;
+  /** HR adds a candidate straight to a job's pipeline (source = MANUAL). */
+  addManualCandidate(input: ManualCandidateInput): Promise<ApplicationRecord>;
   moveStage(input: StageUpdate, actorId?: string): Promise<ApplicationRecord>;
   assignRecruiter(applicationId: string, recruiterId: string | null): Promise<ApplicationRecord>;
   addNote(input: NoteInput, authorId?: string): Promise<void>;

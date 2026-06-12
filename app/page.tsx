@@ -69,13 +69,20 @@ export default async function HomePage() {
             <a href="#about" className="transition-colors hover:text-foreground">About us</a>
             <a href="#process" className="transition-colors hover:text-foreground">How it works</a>
             <Link href="/careers" className="transition-colors hover:text-foreground">Open roles</Link>
+            <Link href="/refer" className="transition-colors hover:text-foreground">Refer someone</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Link
               href="/careers/account"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "hidden sm:inline-flex")}
             >
               Log in / Sign up
+            </Link>
+            <Link
+              href="/refer"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Refer someone
             </Link>
             <Link href="/careers" className={cn(buttonVariants({ size: "sm" }))}>
               View open roles

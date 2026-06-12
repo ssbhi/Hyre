@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { createJob, updateJob } from "@/lib/actions/jobs";
+import { createJob, updateJob, uploadJd } from "@/lib/actions/jobs";
+import { Paperclip } from "lucide-react";
 import {
   EMPLOYMENT_TYPES,
   EMPLOYMENT_TYPE_LABELS,
@@ -75,12 +76,30 @@ export function JobForm({
   const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [skills, setSkills] = useState<string[]>(defaultValues?.requiredSkills ?? []);
   const [skillInput, setSkillInput] = useState("");
+  const [internalEligible, setInternalEligible] = useState(defaultValues?.internalEligible ?? true);
+  const [jdUrl, setJdUrl] = useState(defaultValues?.jdUrl ?? "");
+  const [jdName, setJdName] = useState("");
 
   function addSkill(raw: string) {
     const value = raw.trim().replace(/,$/, "");
     if (!value) return;
     setSkills((prev) => (prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]));
     setSkillInput("");
+  }
+
+  async function onJdChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("jd", file);
+    const res = await uploadJd(fd);
+    if (res.ok) {
+      setJdUrl(res.url);
+      setJdName(file.name);
+      toast.success("JD uploaded");
+    } else {
+      toast.error(res.error);
+    }
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -95,6 +114,8 @@ export function JobForm({
       status,
       requiredSkills: skills,
       description,
+      jdUrl: jdUrl || undefined,
+      internalEligible,
     };
 
     const parsed = jobInputSchema.safeParse(input);
@@ -289,6 +310,32 @@ export function JobForm({
           aria-invalid={!!errors.description}
         />
       </Field>
+
+      <Field label="Job description (JD)" htmlFor="jd" hint="Optional file shown to candidates on the role page.">
+        <label
+          htmlFor="jd"
+          className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed bg-background px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+        >
+          <Paperclip className="size-4" />
+          <span>{jdName || (jdUrl ? "Replace JD file" : "Attach a JD (PDF or Word)")}</span>
+          <input id="jd" type="file" accept=".pdf,.doc,.docx" className="sr-only" onChange={onJdChange} />
+        </label>
+        {jdUrl && (
+          <a href={jdUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+            View current JD
+          </a>
+        )}
+      </Field>
+
+      <label className="flex items-center gap-2.5 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={internalEligible}
+          onChange={(e) => setInternalEligible(e.target.checked)}
+          className="size-4 rounded border-input"
+        />
+        Internal candidates can apply
+      </label>
 
       <div className="flex items-center justify-end gap-2 border-t pt-4">
         <Link href="/jobs" className={cn(buttonVariants({ variant: "ghost" }))}>

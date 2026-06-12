@@ -1,52 +1,60 @@
 "use client";
 
-import { GripVertical, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { moveCandidateStage } from "@/lib/actions/pipeline";
 import type { ApplicationRecord } from "@/lib/data";
-import { initials, relativeTime } from "@/lib/format";
-import {
-  ACTIVE_PIPELINE_STAGES,
-  PIPELINE_STAGES,
-  STAGE_META,
-  type PipelineStage,
-} from "@/lib/schemas/enums";
+import { initials } from "@/lib/format";
+import { PIPELINE_STAGES, STAGE_META, type PipelineStage } from "@/lib/schemas/enums";
 import { cn } from "@/lib/utils";
 
-const TONE_DOT: Record<string, string> = {
-  neutral: "bg-muted-foreground/50",
-  info: "bg-blue-500",
-  progress: "bg-violet-500",
-  success: "bg-emerald-500",
-  danger: "bg-red-500",
-  warning: "bg-amber-500",
-};
+/** An application enriched with the referrer's name (when it came via referral). */
+export type PipelineCard = ApplicationRecord & { referrerName?: string | null };
 
-export function KanbanBoard({ applications }: { applications: ApplicationRecord[] }) {
+/** The five visible columns and which ATS stages each one collects. */
+const COLUMNS: { key: string; label: string; dot: string; stages: PipelineStage[] }[] = [
+  { key: "applied", label: "Applied", dot: "bg-violet-500", stages: ["APPLIED"] },
+  { key: "screening", label: "Screening", dot: "bg-sky-500", stages: ["SCREENING", "SHORTLISTED"] },
+  {
+    key: "interview",
+    label: "Interview",
+    dot: "bg-amber-500",
+    stages: ["INTERVIEW_SCHEDULED", "INTERVIEW_COMPLETED"],
+  },
+  {
+    key: "offer",
+    label: "Offer",
+    dot: "bg-fuchsia-500",
+    stages: ["OFFER_EXTENDED", "OFFER_ACCEPTED"],
+  },
+  { key: "hired", label: "Hired", dot: "bg-emerald-500", stages: ["HIRED"] },
+];
+
+const AVATAR_COLORS = [
+  "bg-violet-100 text-violet-700",
+  "bg-sky-100 text-sky-700",
+  "bg-amber-100 text-amber-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-rose-100 text-rose-700",
+];
+function avatarColor(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h + seed.charCodeAt(i)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[h];
+}
+
+export function KanbanBoard({ applications }: { applications: PipelineCard[] }) {
   const [items, setItems] = useState(applications);
   const [, startTransition] = useTransition();
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [overStage, setOverStage] = useState<PipelineStage | null>(null);
 
-  const byStage = useMemo(() => {
-    const map = new Map<PipelineStage, ApplicationRecord[]>();
-    for (const stage of ACTIVE_PIPELINE_STAGES) map.set(stage, []);
+  const byColumn = useMemo(() => {
+    const map = new Map<string, PipelineCard[]>();
+    for (const col of COLUMNS) map.set(col.key, []);
     for (const app of items) {
-      const bucket = map.get(app.stage);
-      if (bucket) bucket.push(app);
+      const col = COLUMNS.find((c) => c.stages.includes(app.stage));
+      if (col) map.get(col.key)!.push(app);
     }
     return map;
   }, [items]);
@@ -57,105 +65,36 @@ export function KanbanBoard({ applications }: { applications: ApplicationRecord[
 
     const snapshot = items;
     setItems((prev) => prev.map((a) => (a.id === appId ? { ...a, stage: toStage } : a)));
-
     startTransition(async () => {
       const res = await moveCandidateStage(appId, toStage);
       if (res.ok) {
         toast.success(`${app.candidate?.name ?? "Candidate"} → ${STAGE_META[toStage].label}`);
       } else {
-        setItems(snapshot); // revert
+        setItems(snapshot);
         toast.error(res.error);
       }
     });
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-3">
-      {ACTIVE_PIPELINE_STAGES.map((stage) => {
-        const cards = byStage.get(stage) ?? [];
-        const meta = STAGE_META[stage];
+    <div className="flex gap-4 overflow-x-auto pb-4">
+      {COLUMNS.map((col) => {
+        const cards = byColumn.get(col.key) ?? [];
         return (
-          <div
-            key={stage}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-              if (overStage !== stage) setOverStage(stage);
-            }}
-            onDragLeave={(e) => {
-              // Only clear when leaving the column entirely.
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverStage(null);
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              const id = e.dataTransfer.getData("text/plain");
-              setOverStage(null);
-              setDragId(null);
-              if (id) move(id, stage);
-            }}
-            className={cn(
-              "flex w-72 shrink-0 flex-col rounded-xl border bg-muted/30 transition-colors",
-              overStage === stage && "border-primary/50 bg-primary/5",
-            )}
-          >
-            <div className="flex items-center justify-between gap-2 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <span className={cn("size-2 rounded-full", TONE_DOT[meta.tone])} />
-                <span className="text-sm font-medium">{meta.label}</span>
-              </div>
-              <span className="rounded-full bg-background px-1.5 text-xs font-medium text-muted-foreground tabular-nums">
-                {cards.length}
-              </span>
+          <div key={col.key} className="flex w-72 shrink-0 flex-col gap-3">
+            <div className="flex items-center gap-2 px-1">
+              <span className={cn("size-2.5 rounded-full", col.dot)} />
+              <span className="text-sm font-semibold text-slate-700">{col.label}</span>
+              <span className="text-sm font-medium text-slate-400 tabular-nums">{cards.length}</span>
             </div>
 
-            <div className="flex min-h-24 flex-1 flex-col gap-2 px-2 pb-2">
+            <div className="flex flex-col gap-3">
               {cards.map((app) => (
-                <article
-                  key={app.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", app.id);
-                    e.dataTransfer.effectAllowed = "move";
-                    setDragId(app.id);
-                  }}
-                  onDragEnd={() => {
-                    setDragId(null);
-                    setOverStage(null);
-                  }}
-                  className={cn(
-                    "group/card cursor-grab rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md active:cursor-grabbing",
-                    dragId === app.id && "opacity-40",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-1">
-                    <Link
-                      href={`/candidates/${app.id}`}
-                      className="text-sm font-medium leading-snug hover:text-primary"
-                    >
-                      {app.candidate?.name ?? "Candidate"}
-                    </Link>
-                    <CardMenu appId={app.id} currentStage={app.stage} onMove={move} />
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{app.job?.title}</p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">
-                      {relativeTime(app.updatedAt)}
-                    </span>
-                    {app.recruiter && (
-                      <span
-                        title={app.recruiter.name}
-                        className="grid size-5 place-items-center rounded-full bg-primary/10 text-[10px] font-medium text-primary"
-                      >
-                        {initials(app.recruiter.name)}
-                      </span>
-                    )}
-                  </div>
-                </article>
+                <CandidateCard key={app.id} app={app} onMove={move} />
               ))}
-
               {cards.length === 0 && (
-                <div className="grid flex-1 place-items-center rounded-lg border border-dashed text-xs text-muted-foreground/60">
-                  Drop here
+                <div className="grid place-items-center rounded-xl border border-dashed border-slate-200 py-8 text-sm text-slate-400">
+                  No one here yet
                 </div>
               )}
             </div>
@@ -166,46 +105,73 @@ export function KanbanBoard({ applications }: { applications: ApplicationRecord[
   );
 }
 
-function CardMenu({
-  appId,
-  currentStage,
+function CandidateCard({
+  app,
   onMove,
 }: {
-  appId: string;
-  currentStage: PipelineStage;
+  app: PipelineCard;
   onMove: (id: string, stage: PipelineStage) => void;
 }) {
+  const isReferral = app.candidate?.source === "REFERRAL" || Boolean(app.referrerName);
+  const name = app.candidate?.name ?? "Candidate";
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Card actions"
-        className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity outline-none group-hover/card:opacity-100 hover:bg-muted focus-visible:opacity-100"
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <span
+          className={cn(
+            "grid size-9 shrink-0 place-items-center rounded-full text-xs font-semibold",
+            avatarColor(name),
+          )}
+        >
+          {initials(name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/candidates/${app.id}`}
+            className="block truncate text-sm font-semibold text-slate-900 hover:text-violet-700"
+          >
+            {name}
+          </Link>
+          <p className="truncate text-xs text-slate-500">{app.job?.title}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {isReferral ? (
+          <>
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+              Referral
+            </span>
+            {app.referrerName && (
+              <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                via {app.referrerName.split(" ")[0]}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+            Direct
+          </span>
+        )}
+      </div>
+
+      {app.coverNote && (
+        <p className="mt-3 line-clamp-2 text-sm text-slate-600">{app.coverNote}</p>
+      )}
+
+      <select
+        value={app.stage}
+        onChange={(e) => onMove(app.id, e.target.value as PipelineStage)}
+        aria-label={`Stage for ${name}`}
+        className="mt-3 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
       >
-        <MoreVertical className="size-3.5" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem render={<Link href={`/candidates/${appId}`} />}>
-          Open profile
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <GripVertical />
-            Move to
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {PIPELINE_STAGES.map((stage) => (
-              <DropdownMenuItem
-                key={stage}
-                disabled={stage === currentStage}
-                onClick={() => onMove(appId, stage)}
-              >
-                {STAGE_META[stage].label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        {PIPELINE_STAGES.map((s) => (
+          <option key={s} value={s}>
+            {STAGE_META[s].label}
+          </option>
+        ))}
+      </select>
+    </article>
   );
 }

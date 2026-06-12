@@ -28,6 +28,8 @@ export default async function EditJobPage({ params }: { params: Promise<{ id: st
     status: job.status,
     requiredSkills: job.requiredSkills,
     description: job.description,
+    jdUrl: job.jdUrl ?? undefined,
+    internalEligible: job.internalEligible,
   };
 
   return (

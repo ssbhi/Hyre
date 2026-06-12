@@ -144,7 +144,7 @@ export function MultiApplyForm({
         <Input id="skills" name="skills" placeholder="React, TypeScript, Node.js" />
       </Field>
 
-      <Field label="Resume (PDF or Word, max 10 MB)" name="resume" error={errors.resume}>
+      <Field label="Resume (PDF only, max 10 MB)" name="resume" error={errors.resume}>
         <label
           htmlFor="resume"
           className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed bg-background px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
@@ -155,7 +155,7 @@ export function MultiApplyForm({
             id="resume"
             name="resume"
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept="application/pdf,.pdf"
             className="sr-only"
             onChange={(e) => {
               const f = e.target.files?.[0];

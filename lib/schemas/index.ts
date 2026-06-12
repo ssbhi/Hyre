@@ -55,6 +55,8 @@ export const jobInputSchema = z.object({
   locationType: z.enum(LOCATION_TYPES),
   description: z.string().trim().min(20, "Add a fuller description").max(20000),
   requiredSkills: skills,
+  jdUrl: optionalText,
+  internalEligible: z.coerce.boolean().default(true),
   openings: z.coerce.number().int().min(1).max(999).default(1),
   status: z.enum(JOB_STATUSES).default("DRAFT"),
   hiringManagerId: optionalText,
@@ -83,6 +85,16 @@ export const applicationInputSchema = z.object({
   coverNote: optionalText,
 });
 export type ApplicationInput = z.infer<typeof applicationInputSchema>;
+
+/** HR adds a candidate directly to a job's pipeline (no referral). */
+export const manualCandidateSchema = z.object({
+  jobId: z.string().min(1, "Pick a role"),
+  name: z.string().trim().min(2, "Name is required").max(120),
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+  phone: optionalText,
+  comment: optionalText,
+});
+export type ManualCandidateInput = z.infer<typeof manualCandidateSchema>;
 
 // --- Referral (employee) ---------------------------------------------------
 

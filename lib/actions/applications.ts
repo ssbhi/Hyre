@@ -44,6 +44,11 @@ export async function applyToJobs(formData: FormData): Promise<ApplyResult> {
   let resumeUrl: string | undefined;
   const resume = formData.get("resume");
   if (resume instanceof File && resume.size > 0) {
+    const isPdf =
+      resume.type === "application/pdf" || resume.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      return { ok: false, error: "Resume must be a PDF file." };
+    }
     try {
       resumeUrl = (await storage.save(resume)).url;
     } catch (e) {

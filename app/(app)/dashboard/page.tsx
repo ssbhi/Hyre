@@ -1,24 +1,9 @@
 import type { Metadata } from "next";
-import {
-  ArrowRight,
-  Briefcase,
-  CalendarCheck,
-  Inbox,
-  Plus,
-  Star,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
 
-import { QuickActions } from "@/components/app/quick-actions";
-import { StatTile } from "@/components/app/stat-tile";
-import { ReferralStatusBadge, StageBadge } from "@/components/stage-badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getCurrentUser } from "@/lib/auth/session";
 import { repo } from "@/lib/data";
-import { initials, pct, relativeTime } from "@/lib/format";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PipelineStage } from "@/lib/schemas/enums";
 
@@ -32,196 +17,167 @@ function greeting() {
 }
 
 export default async function DashboardPage() {
-  const [user, stats, jobs, pipeline, referrals] = await Promise.all([
-    getCurrentUser(),
+  const [stats, referrals] = await Promise.all([
     repo.getDashboardStats(),
-    repo.listJobs({ status: "PUBLISHED" }),
-    repo.listPipeline(),
     repo.listReferrals(),
   ]);
 
   const stageCount = (stage: PipelineStage) =>
     stats.stageCounts.find((s) => s.stage === stage)?.count ?? 0;
 
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const newThisWeek = pipeline.filter((a) => new Date(a.createdAt).getTime() >= weekAgo).length;
-  const toReview = stageCount("APPLIED") + stageCount("SCREENING");
+  // Active candidates = anyone in the pipeline who hasn't reached a terminal stage.
+  const activeCandidates =
+    stats.stageCounts
+      .filter((s) => !["HIRED", "REJECTED", "ON_HOLD"].includes(s.stage))
+      .reduce((sum, s) => sum + s.count, 0);
 
-  const recentJobs = jobs.slice(0, 5);
-  const needsAttention = pipeline
-    .filter((a) => a.stage === "APPLIED" || a.stage === "SCREENING")
-    .slice(0, 6);
-  const recentReferrals = referrals.slice(0, 4);
-  const funnelMax = stats.funnel[0]?.count || 1;
+  // Collapse the 8 ATS stages into the 5 funnel buckets the design shows.
+  const funnel = [
+    { label: "Applied", count: stageCount("APPLIED"), color: "bg-violet-500" },
+    {
+      label: "Screening",
+      count: stageCount("SCREENING") + stageCount("SHORTLISTED"),
+      color: "bg-sky-500",
+    },
+    {
+      label: "Interview",
+      count: stageCount("INTERVIEW_SCHEDULED") + stageCount("INTERVIEW_COMPLETED"),
+      color: "bg-amber-500",
+    },
+    {
+      label: "Offer",
+      count: stageCount("OFFER_EXTENDED") + stageCount("OFFER_ACCEPTED"),
+      color: "bg-fuchsia-500",
+    },
+    { label: "Hired", count: stageCount("HIRED"), color: "bg-emerald-500" },
+  ];
+  const funnelMax = Math.max(1, ...funnel.map((f) => f.count));
+
+  // Top referrers, derived from the referral list.
+  const refMap = new Map<string, { total: number; hired: number }>();
+  for (const r of referrals) {
+    const e = refMap.get(r.referrer.name) ?? { total: 0, hired: 0 };
+    e.total += 1;
+    if (r.status === "HIRED") e.hired += 1;
+    refMap.set(r.referrer.name, e);
+  }
+  const topReferrers = [...refMap.entries()]
+    .map(([name, v]) => ({ name, ...v }))
+    .sort((a, b) => b.hired - a.hired || b.total - a.total)
+    .slice(0, 5);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Greeting */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting()}, {user.name.split(" ")[0]} 👋
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Here&apos;s what&apos;s happening across your pipeline today.
-          </p>
-        </div>
-        <Link href="/jobs" className={cn(buttonVariants(), "gap-1.5")}>
-          <Plus className="size-4" />
-          Post a job
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          {greeting()} <span className="align-middle">👋</span>
+        </h1>
+        <p className="mt-1 text-slate-500">Here&apos;s where hiring stands today.</p>
       </div>
 
-      {/* Stat tiles — quick status of jobs & applicants */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatTile label="Active jobs" value={stats.openPositions} icon={Briefcase} accent hint="Currently published" />
-        <StatTile label="New applications" value={newThisWeek} icon={Inbox} hint="In the last 7 days" />
-        <StatTile label="To be reviewed" value={toReview} icon={Users} hint="Applied + screening" />
-        <StatTile label="Shortlisted" value={stageCount("SHORTLISTED")} icon={Star} hint="Awaiting interview" />
-        <StatTile label="Interviews scheduled" value={stageCount("INTERVIEW_SCHEDULED")} icon={CalendarCheck} hint="Upcoming interviews" />
+      {/* Stat cards */}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard value={stats.openPositions} label="Open roles" accent="violet" />
+        <StatCard value={activeCandidates} label="Active candidates" accent="sky" />
+        <StatCard value={referrals.length} label="Referrals received" accent="amber" />
+        <StatCard value={stageCount("HIRED")} label="Hires this quarter" accent="emerald" />
       </div>
 
-      {/* Funnel + referral snapshot */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Hiring funnel</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {stats.funnel.map((f, i) => {
-              const width = Math.max(4, Math.round((f.count / funnelMax) * 100));
-              return (
-                <div key={f.stage}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{f.label}</span>
-                    <span className="font-medium tabular-nums">{f.count}</span>
-                  </div>
-                  <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${width}%`, backgroundColor: `var(--chart-${(i % 5) + 1})` }}
-                    />
-                  </div>
+      {/* Funnel + top referrers */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Pipeline funnel */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <h2 className="text-lg font-semibold text-slate-900">Pipeline funnel</h2>
+          <div className="mt-5 space-y-4">
+            {funnel.map((row) => (
+              <div key={row.label} className="flex items-center gap-4">
+                <span className="w-20 shrink-0 text-sm text-slate-600">{row.label}</span>
+                <div className="h-7 flex-1 overflow-hidden rounded-md bg-slate-100">
+                  <div
+                    className={cn("h-full rounded-md transition-all", row.color)}
+                    style={{ width: `${Math.round((row.count / funnelMax) * 100)}%` }}
+                  />
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Referrals
-              <Link href="/referrals" className="text-xs font-normal text-primary hover:underline">
-                View all
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg border p-3">
-                <div className="text-2xl font-semibold tabular-nums">{stats.activeReferrals}</div>
-                <div className="text-xs text-muted-foreground">Active</div>
+                <span className="w-6 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-700">
+                  {row.count}
+                </span>
               </div>
-              <div className="rounded-lg border p-3">
-                <div className="text-2xl font-semibold tabular-nums">{pct(stats.referralConversionRate)}</div>
-                <div className="text-xs text-muted-foreground">Conversion</div>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {recentReferrals.map((r) => (
-                <div key={r.id} className="flex items-center gap-2.5">
-                  <div className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-xs font-medium">
-                    {initials(r.referrer.name)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">
-                      <span className="font-medium">{r.referrer.name.split(" ")[0]}</span>
-                      {" referred "}
-                      <span className="font-medium">{r.candidate.name}</span>
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">{r.job.title}</p>
-                  </div>
-                  <ReferralStatusBadge status={r.status} />
-                </div>
-              ))}
-              {recentReferrals.length === 0 && (
-                <p className="text-sm text-muted-foreground">No referrals yet.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            ))}
+          </div>
+          <Link
+            href="/candidates"
+            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700"
+          >
+            Open full pipeline <ArrowRight className="size-4" />
+          </Link>
+        </section>
 
-      {/* Needs attention + recent jobs */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="size-4 text-primary" />
-              Needs your attention
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {needsAttention.length === 0 && (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                You&apos;re all caught up. 🎉
-              </p>
+        {/* Top referrers */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">Top referrers</h2>
+          <div className="mt-5 space-y-4">
+            {topReferrers.length === 0 && (
+              <p className="text-sm text-slate-500">No referrals yet.</p>
             )}
-            {needsAttention.map((a) => (
-              <div
-                key={a.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
-              >
-                <div className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-sm font-medium">
-                  {initials(a.candidate?.name ?? "?")}
-                </div>
+            {topReferrers.map((r, i) => (
+              <div key={r.name} className="flex items-center gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                  {initials(r.name)}
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.candidate?.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {a.job?.title} · applied {relativeTime(a.createdAt)}
+                  <p className="truncate text-sm font-semibold text-slate-900">{r.name}</p>
+                  <p className="truncate text-xs text-slate-500">
+                    {r.total} referred · {r.hired} hired
                   </p>
                 </div>
-                <StageBadge stage={a.stage} />
-                <QuickActions applicationId={a.id} candidateName={a.candidate?.name ?? "Candidate"} />
+                {i === 0 && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-600">
+                    <Star className="size-3 fill-amber-400 text-amber-400" />
+                    Top
+                  </span>
+                )}
               </div>
             ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Recent jobs
-              <Link href="/jobs" className="text-xs font-normal text-primary hover:underline">
-                See all
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {recentJobs.map((j) => (
-              <Link
-                key={j.id}
-                href="/jobs"
-                className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/50"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{j.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">{j.department}</p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-semibold tabular-nums">{j.applicantCount ?? 0}</p>
-                  <p className="text-xs text-muted-foreground">applicants</p>
-                </div>
-                <ArrowRight className="size-4 shrink-0 text-muted-foreground/50" />
-              </Link>
-            ))}
-            {recentJobs.length === 0 && (
-              <p className="text-sm text-muted-foreground">No published jobs yet.</p>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+          <Link
+            href="/referrals"
+            className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-violet-600 hover:text-violet-700"
+          >
+            View referral tracker <ArrowRight className="size-4" />
+          </Link>
+        </section>
       </div>
+    </div>
+  );
+}
+
+const ACCENTS = {
+  violet: { border: "border-t-violet-500", text: "text-violet-600" },
+  sky: { border: "border-t-sky-500", text: "text-sky-600" },
+  amber: { border: "border-t-amber-500", text: "text-amber-600" },
+  emerald: { border: "border-t-emerald-500", text: "text-emerald-600" },
+} as const;
+
+function StatCard({
+  value,
+  label,
+  accent,
+}: {
+  value: number;
+  label: string;
+  accent: keyof typeof ACCENTS;
+}) {
+  const a = ACCENTS[accent];
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-slate-200 border-t-4 bg-white p-5 shadow-sm",
+        a.border,
+      )}
+    >
+      <p className={cn("text-4xl font-bold tabular-nums", a.text)}>{value}</p>
+      <p className="mt-2 text-sm font-medium text-slate-600">{label}</p>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
-import { Logo } from "@/components/brand/logo";
+import { CompanyLogo } from "@/components/brand/company-logo";
 import { getSessionUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -16,7 +16,7 @@ export default async function LoginPage() {
     <main className="grid min-h-full place-items-center px-5 py-16">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <Logo />
+          <CompanyLogo />
         </div>
         <div className="rounded-2xl border bg-card p-6 shadow-sm">
           <h1 className="text-lg font-semibold tracking-tight">Sign in to True Hire</h1>
@@ -26,9 +26,15 @@ export default async function LoginPage() {
           <div className="mt-5">
             <LoginForm />
           </div>
-          <div className="mt-4 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Demo login</span> ·
-            shobhit.soni@hyre.dev / hyre1234
+          <div className="mt-4 space-y-1 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <p>
+              <span className="font-medium text-foreground">HR (company email):</span> sign in with
+              your work email — first sign-in sets your password.
+            </p>
+            <p>
+              <span className="font-medium text-foreground">Demo:</span> shobhit.soni@hyre.dev /
+              hyre1234
+            </p>
           </div>
         </div>
         <p className="mt-4 text-center text-sm text-muted-foreground">

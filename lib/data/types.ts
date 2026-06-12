@@ -37,6 +37,8 @@ export interface JobRecord {
   locationType: LocationType;
   description: string;
   requiredSkills: string[];
+  jdUrl: string | null;
+  internalEligible: boolean;
   openings: number;
   status: JobStatus;
   postedAt: string | null;

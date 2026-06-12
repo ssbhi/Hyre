@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { KanbanBoard } from "@/components/pipeline/kanban-board";
+import { KanbanBoard, type PipelineCard } from "@/components/pipeline/kanban-board";
 import { PipelineToolbar } from "@/components/pipeline/pipeline-toolbar";
 import { repo } from "@/lib/data";
 
@@ -15,18 +15,26 @@ export default async function CandidatesPage({
   const jobId = sp.jobId?.trim() || undefined;
   const q = sp.q?.trim() || undefined;
 
-  const [applications, jobs] = await Promise.all([
+  const [applications, jobs, referrals] = await Promise.all([
     repo.listPipeline({ jobId, search: q }),
     repo.listJobs(),
+    repo.listReferrals(),
   ]);
 
+  // Map candidate → referrer name so cards can show "Referral · via {name}".
+  const referrerByCandidate = new Map<string, string>();
+  for (const r of referrals) referrerByCandidate.set(r.candidate.id, r.referrer.name);
+
+  const cards: PipelineCard[] = applications.map((a) => ({
+    ...a,
+    referrerName: referrerByCandidate.get(a.candidateId) ?? null,
+  }));
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Pipeline</h1>
-        <p className="text-sm text-muted-foreground">
-          Drag candidates between stages, or use the card menu. {applications.length} in pipeline.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Candidate pipeline</h1>
+        <p className="mt-1 text-slate-500">Move candidates through stages as they progress.</p>
       </div>
 
       <PipelineToolbar
@@ -36,7 +44,7 @@ export default async function CandidatesPage({
       />
 
       {/* key remounts the board with fresh data when filters change */}
-      <KanbanBoard key={`${jobId ?? "all"}:${q ?? ""}`} applications={applications} />
+      <KanbanBoard key={`${jobId ?? "all"}:${q ?? ""}`} applications={cards} />
     </div>
   );
 }

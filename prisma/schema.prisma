@@ -52,6 +52,8 @@ model Job {
   locationType   String   @default("ONSITE") // ONSITE | REMOTE | HYBRID
   description    String
   requiredSkills String   @default("[]") // JSON array of strings
+  jdUrl          String? // uploaded job-description file (PDF/doc), shown to candidates
+  internalEligible Boolean @default(true) // can internal/employee candidates apply
   openings       Int      @default(1)
   status         String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
   postedAt       DateTime?
