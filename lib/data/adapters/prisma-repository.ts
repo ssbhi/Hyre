@@ -625,6 +625,21 @@ export class PrismaRepository implements HyreRepository {
       update: {},
     });
 
+    // One referral per candidate per role (Referral.applicationId is unique).
+    // Without this check a second referral crashes on the constraint instead of
+    // telling the submitter what happened.
+    const already = await prisma.referral.findUnique({
+      where: { applicationId: application.id },
+      include: { referrer: true },
+    });
+    if (already) {
+      throw new Error(
+        `${input.candidateName} has already been referred for this role` +
+          (already.referrer ? ` (by ${already.referrer.name})` : "") +
+          `. Only one referral per candidate per role is counted.`,
+      );
+    }
+
     const row = await prisma.referral.create({
       data: {
         jobId: input.jobId,

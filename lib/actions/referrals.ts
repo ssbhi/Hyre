@@ -73,7 +73,11 @@ export async function submitReferral(formData: FormData): Promise<ReferralResult
     return { ok: false, error: "That role isn't open for referrals." };
   }
 
-  await repo.createReferral(parsed.data, user.id);
+  try {
+    await repo.createReferral(parsed.data, user.id);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Couldn't submit the referral." };
+  }
   revalidatePath("/referrals");
   revalidatePath("/dashboard");
   revalidatePath("/candidates");
@@ -111,7 +115,11 @@ export async function addCandidateOrReferral(formData: FormData): Promise<Referr
     if (!parsed.success) {
       return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error.flatten().fieldErrors) };
     }
-    await repo.createReferral(parsed.data, user.id);
+    try {
+      await repo.createReferral(parsed.data, user.id);
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Couldn't save the referral." };
+    }
   } else {
     const parsed = manualCandidateSchema.safeParse({
       jobId: get("jobId") ?? "",
@@ -123,7 +131,11 @@ export async function addCandidateOrReferral(formData: FormData): Promise<Referr
     if (!parsed.success) {
       return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: fieldErrorsFrom(parsed.error.flatten().fieldErrors) };
     }
-    await repo.addManualCandidate(parsed.data);
+    try {
+      await repo.addManualCandidate(parsed.data);
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Couldn't add the candidate." };
+    }
   }
 
   revalidatePath("/referrals");
@@ -186,7 +198,11 @@ export async function submitPublicReferral(formData: FormData): Promise<Referral
     (await repo.getUserByEmail(referrerEmail)) ??
     (await repo.createUser({ name: referrerName, email: referrerEmail, role: "EMPLOYEE" }));
 
-  await repo.createReferral(parsed.data, referrer.id);
+  try {
+    await repo.createReferral(parsed.data, referrer.id);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Couldn't submit the referral." };
+  }
   revalidatePath("/referrals");
   revalidatePath("/dashboard");
   revalidatePath("/candidates");
